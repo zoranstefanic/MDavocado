@@ -1,3 +1,5 @@
+![MDavocado_logo](./MDavocado.png)
+
 MDavocado
 ---------
 
