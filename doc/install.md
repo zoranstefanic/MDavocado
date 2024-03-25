@@ -40,3 +40,8 @@ conda install ruptures
 ```bash
 conda install datashader
 ```
+Trying to import Datashader complains about Dask, so we install [Dask](https://www.dask.org/) too.
+
+```bash
+conda install dask
+```
