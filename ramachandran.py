@@ -8,9 +8,11 @@ from datashader.colors import viridis
 from MDAnalysis import Universe
 from MDAnalysis.analysis.dihedrals import Ramachandran
 from string import ascii_uppercase
+from shutil import copy
 
 class RamachandranPlots:
     def __init__(self, universe):
+        "Takes MDAnalysis Universe as a input"
         self.universe = universe
         self.nframes = universe.trajectory.n_frames
         self.protein = universe.select_atoms('protein')
@@ -100,7 +102,70 @@ class RamachandranPlots:
         img = img.to_pil()
         img.save('%s.png' %(n))
 
+    def create_blanks(self):
+        """Create two blank images for the first and last amino acid
+        This relies on convert command from ImageMagick to be installed.
+        """
+        #FIXME: Could be implemented using PIL in pure Python.
+        os.chdir(self.dir)
+        n = self.nresidues
+        os.system('convert -size 500x500 xc:white 1.png')
+        os.system('convert -size 500x500 xc:white %d.png' % n)
+        for i in range(self.n):
+            print('Copying blanks to df%d' %i)           
+            copy('1.png','df%d/1.png'%i) 
+            copy('%d.png' %n,'df%d/%d.png'%(i,n)) 
+
+    def annotate_images(self):
+        "Annotate all images with their file numbers"
+        #TODO: Could be implemented using PIL in pure Python.
+        for i in range(self.n):
+            print('Adding labels in dir: df%d' %i) 
+            os.chdir('df%d' %i)
+            os.system("mogrify -gravity South -annotate 0 '%t' -pointsize 50 *.png") 
+            os.chdir(self.dir) 
+
+    def create_gifs(self):
+        """Create one gif for each amino acid stacking
+        png images from directores df0 ... df9 i.e. times
+        """
+        if not os.path.exists('gifs'):
+            print('Making directory gifs')
+            os.mkdir('gifs')
+        for i in range(1,self.nresidues+1):
+            print('Making gif: %d' %i)  
+            #TODO check if the command below respects the order df0 ... df9 (shell expends this)
+            #                                  originally this was ./df{0..9}/
+            command = "convert -dispose previous -delay 10 -loop 0 ./df*/%d.png gifs/%d.gif" %(i,i)
+            os.system(command)
+        os.chdir(self.dir) 
+    
+    def montage(self):
+        """
+        Combine all pngs into a tile for each chain.
+        Finally combine all chain montages to a single gif.
+        """
+        chns = list(ascii_uppercase[:self.nchains]) # ['A','B','C'...,'F']
+        N = self.res_per_chain 
+        chains = dict(zip(chns,[(N*i+1,N*(i+1)) for i in range(self.nchains)]))
+        for i in range(self.n):
+            print('Making montage in dir: df%d' %i) 
+            os.chdir('df%d' %i)
+            for c,v in chains.items():
+                pnglist = ' '.join([str(i)+'.png' for i in range(v[0],v[1])])
+                os.system("montage -geometry 100x100 %s %s.png" %(pnglist,c))
+                os.system("mogrify -gravity SouthEast -annotate 0 '%s' -pointsize 70 %s.png" % (c,c))
+            os.chdir(self.dir) 
+        for c in chns:
+            flist = ' '.join(['./df'+str(i)+'/%s.png' %c for i in range(self.n)])
+            os.system("convert -dispose previous -delay 10 -loop 0 %s %s.gif" % (flist,c))
+        print('All done!')
+    
     def run(self):
         self.make_all_dataframes()
         self.concat_dataframes()
         self.make_avokado_images()
+        self.create_blanks()
+        self.annotate_images()
+        self.create_gifs()
+        self.montage()
