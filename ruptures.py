@@ -72,3 +72,21 @@ class RupturePlots:
     def make_figures(self):
         for n in range(2,1397):
             self.save_png(n)
+
+def do_ruptures(traj_id):
+    #u = Universe(topology,trajectory)
+    os.chdir(traj_id)
+    print('Starting ruptures in %s' %traj_id)
+    rup = RupturePlots('rama_all_spiked.pkl')
+    rup.remove_spikes()
+    os.system('mv rama_all_no_spikes.pkl rama_all.pkl')
+    rup = RupturePlots('rama_all.pkl')
+    if not os.path.exists('ruptures'):
+        os.mkdir('ruptures')
+    os.chdir('ruptures')
+    rup.make_figures()
+    os.chdir('..')
+    pickle.dump(rup.change_points, open('change_points_.pkl','wb'))
+    print('Finished ruptures in %s' %traj_id)
+    os.chdir(TOPDIR)
+    del rup
