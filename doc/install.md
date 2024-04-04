@@ -1,27 +1,45 @@
 #Installation
 
-To start using MDavocado the follwing dependances need to be installed first:
+Perhaps the easiest way is start using MDavocado is to clone this repository,
+and then folow these simple steps.
 
-It is easiest to make a new conda environment:
+First we make a clean new conda environment (we have named it MDavocado, but
+you can call it anything you like). All the dependences will be installed from
+the file packages into that newly created conda environment. 
 
 ```bash
+# To exactly replicate this conda environment use this command:
+conda create --name MDavocado --file packages.txt
+```
 
-# Create new conda environment named 'MDavocado'
-conda create -n MDavocado
-
+Once this is done we activate the new environment. 
+```bash
 # Activate new conda environment
 conda activate MDavocado
 ```
 
+Now that we are in the new environment we execute the command:
+```bash
+./MDavocado.py topology.file trajectory.file
+```
+
+This will make a number of gif images named A.gif, B.gif ... Each one is a visual representation of the whole trajectory of one chain in your protein.
+It may take anywhere from few minutes for smaller trajectories, to a few hours for a long trajectories and bigger proteins, for this analysis to finish.
+That is it!
+
+#Longer installation instructions
+
 ##Installing MDAnalysis
-Then we have to install [MDAnalysis](https://www.mdanalysis.org/).
 
 ```bash
+# Then we have to install [MDAnalysis](https://www.mdanalysis.org/).
+
 conda config --add channels conda-forge
 conda install mdanalysis
 
 # List packages installed by MDAnalysis
 conda list --export > packages.txt
+
 # To exactly replicate this conda environment use this command:
 conda create --name MDavocado --file packages.txt
 ```
