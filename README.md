@@ -1,20 +1,21 @@
 ![MDavocado_logo](./MDavocado.png)
 
-MDavocado
----------
+# MDavocado
 
 This is a repository of the MDavocado utility. It is a set of programes
 written in Python which enable quick visualization of Molecular dynamics
 trajectories. It can be considerred as an extension for the well known
 [MDanalysis](https://www.mdanalysis.org/) suite of programs. 
 
-What does the name stand for?
-----------------------------
+## What does the name stand for?
 
-The name is the acronym for: MD Analysis and Visualization Of Correlated Angular Diagrams.  
+The name is the acronym for: **MD** **A**nalysis and **V**isualization **O**f **C**orrelated **A**ngular **D**iagrams.  
 
+# Methodology
 
-#Installation instructions
+The methodology behind MDavocado diagrams is explained in more detail in [methodology.md](doc/methodology.md).
+
+# Installation instructions
 
 Perhaps the easiest way is start using MDavocado is to clone this repository,
 and then folow these simple steps.
@@ -43,9 +44,10 @@ This will make a number of gif images named A.gif, B.gif ... Each one is a visua
 It may take anywhere from few minutes for smaller trajectories, to a few hours for a long trajectories and bigger proteins, for this analysis to finish.
 That is it!
 
-#More detailed installation instructions
+# More detailed installation instructions
 
-##Installing MDAnalysis
+## Installing MDAnalysis
+
 
 ```bash
 # Then we have to install [MDAnalysis](https://www.mdanalysis.org/).
@@ -60,7 +62,8 @@ conda list --export > packages.txt
 conda create --name MDavocado --file packages.txt
 ```
 
-##Installing Ruptures
+## Installing Ruptures
+
 If you would like to use change point detection then install [Ruptures](https://centre-borelli.github.io/ruptures-docs/) library.
 Anyway the main command imports this so we need to install it too.
 
@@ -68,7 +71,7 @@ Anyway the main command imports this so we need to install it too.
 conda install ruptures
 ```
 
-##Installing Datashader
+## Installing Datashader
 [Datashader](https://datashader.org/) we deffinitely need to install as the ploting of avocado diagrams depends on it.
 
 ```bash
