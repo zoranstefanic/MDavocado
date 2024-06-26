@@ -82,3 +82,6 @@ Trying to import Datashader complains about Dask, so we install [Dask](https://w
 ```bash
 conda install dask
 ```
+## Funding
+
+The development of this project is financed by [Croatian Science Foundation](https://hrzz.hr/en/) under the project grant IP-2019-04-6764. It is a part of [ALOKOMP project](https://alokomp.irb.hr/).
