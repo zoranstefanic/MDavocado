@@ -85,3 +85,6 @@ conda install dask
 ## Funding
 
 The development of this project is financed by [Croatian Science Foundation](https://hrzz.hr/en/) under the project grant IP-2019-04-6764. It is a part of [ALOKOMP project](https://alokomp.irb.hr/).
+
+## Citation
+A detailed description of the methodology and usage of MDavocado has been published in the Journal of Chemical Information and Modeling in the paper titled *MDavocado: Analysis and Visualization of Protein Motion by Time-Dependent Angular Diagrams* (10.1021/acs.jcim.4c00650).
