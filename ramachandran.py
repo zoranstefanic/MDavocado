@@ -9,6 +9,8 @@ from MDAnalysis import Universe
 from MDAnalysis.analysis.dihedrals import Ramachandran, Janin
 from string import ascii_uppercase
 from shutil import copy
+import json
+from astropy.stats import circmean, circcorrcoef
 
 class RamachandranPlots:
     def __init__(self, universe):
@@ -330,7 +332,59 @@ class JaninPlots:
             flist = ' '.join(['./janin'+str(i)+'/%s.png' %c for i in range(self.n)])
             os.system("convert -dispose previous -delay 10 -loop 0 %s %s.gif" % (flist,c))
         print('All done!')
-    
+
+    def circular_correlation_matrix(self): 
+        """After much work finally this function correctly calculates
+        correlation coefficient between Ramachandran angles without 
+        any need for removig spikes first, it uses original angles
+        coming from MDanalysis.
+        Uses this formula:
+        https://docs.astropy.org/en/stable/api/astropy.stats.circcorrcoef.html
+        Also cleverly uses numpy broadcasting to calculate fast!
+        """
+        l = []
+        for i in self.resids:
+            l += [2*i-2,2*i-1]
+        self.janin.columns = l
+        janin = np.radians(self.janin)
+        cmean = circmean(janin)
+        sinr = np.sin(janin - cmean)
+        numerator = np.matmul(sinr.T,np.asarray(sinr))
+        sinr2 = np.sum(np.sin(janin - cmean)**2)
+        # denominator is np.sqrt od sin2_r_minus_mean[i] * sin2_r_minus_mean[j]
+        # we have to get the matrix Aij from array Ai such that Aij = Ai x Aj.
+        # Numpy outer product to the rescue:
+        denominator = np.sqrt(np.outer(sinr2,sinr2))
+        self.cm = numerator/denominator
+        self.cm.columns = l
+
+    def truncate_correlation_matrix(self,limit=0.5):
+        "Leave only rows and columns which have at least one element with corr > limit or corr < - limit"
+        # First set diagonal elements to 0 and the immediate neighbours 
+        n = self.cm.shape[0]
+        a = np.diag(np.ones(n-1),k=1) + np.diag(np.ones(n)) + np.diag(np.ones(n-1),k=-1) == True
+        self.cm.mask(a,0,inplace=True)
+        self.cm = self.cm[abs(self.cm)>limit]
+        indices = self.cm.any(axis=0) 
+        self.cm = self.cm.loc[indices,indices]
+
+    def extract_correlations(self,limit=0.5):
+        self.corr = {}
+        cm_t = self.cm
+        cm_t.columns= list(map(self.num_to_res_num,cm_t.columns))
+        cm_t.index = list(map(self.num_to_res_num,cm_t.index))
+        for c in cm_t.columns:
+            self.corr[c] = dict(cm_t[cm_t[c].notnull()][c])
+        pickle.dump(self.corr,open(os.path.join(self.dir,'janin_corr.pkl'),'wb'))
+
+    def num_to_res_num(self,i):
+        chi1_chi2 = ('chi1','chi2')[i%2]
+        if chi1_chi2 == 'chi1':
+            n = (i+2)/2
+        else:
+            n = (i+1)/2
+        return int(n), chi1_chi2
+
     def run(self):
         self.make_all_dataframes()
         self.concat_dataframes()
