@@ -22,7 +22,7 @@ class RamachandranPlots:
         self.nchains = len(self.protein.fragments)
         self.res_per_chain = self.nresidues//self.nchains
         self.resnames = self.get_resnames()
-        self.dir = os.path.dirname(self.universe.filename)
+        self.dir = os.path.abspath(os.path.dirname(self.universe.filename))
         self.n  = 10 # Number of pieces to cut the trajectory into
         self.delta = self.nframes // self.n
         self.cvs = ds.Canvas(plot_width=500, plot_height=500,x_range=(-180,180),y_range=(-180,180))
@@ -88,12 +88,17 @@ class RamachandranPlots:
             print('Finished directory %s' %directory)
             os.chdir(self.dir)
 
-    def create_images(self,df,d):
-        if not os.path.exists(d):
-           os.mkdir(d)
-        os.chdir(d)
-        for n in range(2,self.nresidues):
-           self.create_phi_psi(df,n)
+    def create_images(self, df, d):
+        dir_path = os.path.join(self.dir, d)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path, exist_ok=True)
+        original_dir = os.getcwd()
+        try:
+            os.chdir(dir_path)
+            for n in range(2, self.nresidues):
+                self.create_phi_psi(df, n)
+        finally:
+            os.chdir(original_dir)  # Return to original directory
 
     def create_phi_psi(self,df,n):
         "Creates the phi_psi plot for residue number n during the trajectory"
@@ -105,27 +110,33 @@ class RamachandranPlots:
         img.save('%s.png' %(n))
 
     def create_blanks(self):
-        """Create two blank images for the first and last amino acid
-        This relies on convert command from ImageMagick to be installed.
-        """
-        #FIXME: Could be implemented using PIL in pure Python.
         os.chdir(self.dir)
         n = self.nresidues
         os.system('convert -size 500x500 xc:white 1.png')
         os.system('convert -size 500x500 xc:white %d.png' % n)
         for i in range(self.n):
-            print('Copying blanks to df%d' %i)           
-            copy('1.png','df%d/1.png'%i) 
-            copy('%d.png' %n,'df%d/%d.png'%(i,n)) 
+            dir_name = 'df%d' % i
+            dir_path = os.path.join(self.dir, dir_name)
+            if not os.path.exists(dir_path):
+                os.makedirs(dir_path, exist_ok=True)
+            print('Copying blanks to %s' % dir_name)
+            copy('1.png', os.path.join(dir_path, '1.png'))
+            copy('%d.png' % n, os.path.join(dir_path, '%d.png' % n))
 
     def annotate_images(self):
-        "Annotate all images with their file numbers"
-        #TODO: Could be implemented using PIL in pure Python.
+        original_dir = os.getcwd()
         for i in range(self.n):
-            print('Adding labels in dir: df%d' %i) 
-            os.chdir('df%d' %i)
-            os.system("mogrify -gravity South -annotate 0 '%t' -pointsize 50 *.png") 
-            os.chdir(self.dir) 
+            dir_name = 'df%d' % i
+            dir_path = os.path.join(self.dir, dir_name)
+            if not os.path.exists(dir_path):
+                print(f"Skipping {dir_name} (not found).")
+                continue
+            print('Adding labels in dir: %s' % dir_name)
+            try:
+                os.chdir(dir_path)
+                os.system("mogrify -gravity South -annotate 0 '%t' -pointsize 50 *.png")
+            finally:
+                os.chdir(original_dir)  # Always return to original directory
 
     def create_gifs(self):
         """Create one gif for each amino acid stacking
